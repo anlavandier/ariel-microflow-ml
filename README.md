@@ -41,7 +41,7 @@ Now only supporting quantized models.
 For that, use uv from astral (https://docs.astral.sh/uv/ ) to manage packages and version ; then run the notebook corresponding to your desired model to generate / update the tflite file.
 
 Since torch and tensorflow can be conflicting on versions, there is two folders to generate, each having its own env,
-In a folder, run 
+In a folder, run
 ```
 uv sync
 ```
@@ -85,8 +85,8 @@ Timings are averaged over 10 runs
 |-------------|-----------|-----------|-------------------------|-------------------|
 | lenet5q     | mono core | 53        | 14                      | -                 |
 | lenet5q     | dual core | 41        | 14                      | 1                 |
-| mobilenetv1 | mono core | 3537      | 320                     | -                 |
-| mobilenetv1 | dual core | 2267      | 320                     | 17                |
+| mobilenetv1 | mono core | 3523      | 320                     | -                 |
+| mobilenetv1 | dual core | 2253      | 320                     | 17                |
 
 
 ## Current state of work / TODO
