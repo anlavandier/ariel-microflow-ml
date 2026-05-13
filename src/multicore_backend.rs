@@ -1,16 +1,8 @@
-#![no_main]
-#![no_std]
-
-use ariel_os::{debug::log::*, thread::CoreAffinity};
+use ariel_os::debug::log::*;
 use ariel_os::thread::sync::Channel;
 use portable_atomic::{AtomicUsize, Ordering};
-use microflow::backend::Backend;
+use microflow::backend::{Backend, Job};
 
-#[derive(Copy, Clone)]
-pub struct Job {
-    pub func: fn(usize),
-    pub arg: usize,
-}
 
 static WORK_QUEUE: Channel<Job> = Channel::new();
 static JOB_REMAINING: AtomicUsize = AtomicUsize::new(0);
@@ -18,16 +10,16 @@ static JOB_REMAINING: AtomicUsize = AtomicUsize::new(0);
 pub struct ArielBackend;
 
 impl Backend for ArielBackend {
-    fn defer_job(func: fn(usize), arg: usize) {
+    fn defer_job(job: Job) {
         JOB_REMAINING.fetch_add(1, Ordering::Relaxed);
-        WORK_QUEUE.send(&Job { func, arg });
+        WORK_QUEUE.send(&job);
     }
 
     fn wait() {
         while JOB_REMAINING.load(Ordering::Acquire) > 0 {
-            core::hint::spin_loop();
+            ariel_os::thread::yield_same();
         }
-    }        
+    }
 }
 
 fn worker() {
@@ -37,15 +29,15 @@ fn worker() {
 
     loop {
         let job = WORK_QUEUE.recv();
-        (job.func)(job.arg);
+        job.run();
         JOB_REMAINING.fetch_sub(1, Ordering::Release);
     }
 }
 
 #[ariel_os::thread(
-    autostart, 
-    priority = 1, 
-    affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(0)),
+    autostart,
+    priority = 2,
+    // affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(0)),
     stacksize = 17000
 )]
 fn thread0() {
@@ -53,9 +45,9 @@ fn thread0() {
 }
 
 #[ariel_os::thread(
-    autostart, 
-    priority = 1, 
-    affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(1)),
+    autostart,
+    priority = 2,
+    // affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(1)),
     stacksize = 17000
 )]
 fn thread1() {
