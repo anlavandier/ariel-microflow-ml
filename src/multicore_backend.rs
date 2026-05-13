@@ -1,8 +1,7 @@
 use ariel_os::debug::log::*;
 use ariel_os::thread::sync::Channel;
-use portable_atomic::{AtomicUsize, Ordering};
 use microflow::backend::{Backend, Job};
-
+use portable_atomic::{AtomicUsize, Ordering};
 
 static WORK_QUEUE: Channel<Job> = Channel::new();
 static JOB_REMAINING: AtomicUsize = AtomicUsize::new(0);

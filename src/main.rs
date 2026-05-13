@@ -5,13 +5,17 @@ use ariel_os::debug::{ExitCode, exit, log::info};
 use ariel_os::time::Instant;
 use microflow::model;
 
-mod multicore_backend;
-#[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
+#[cfg(any(
+    feature = "lenet5qtf",
+    feature = "lenet5qtfdualcore",
+    feature = "lenet5qtorch"
+))]
 #[path = "../samples/lenet/sample.rs"]
 mod lenet_samples;
 #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
 #[path = "../samples/mobilenetv1/sample.rs"]
 mod mobilenet_samples;
+mod multicore_backend;
 
 // Exactly one model feature overall (reject none and any multi-select).
 #[cfg(not(any(
@@ -21,14 +25,19 @@ mod mobilenet_samples;
     feature = "lenet5qtfdualcore",
     feature = "mobilenetv1dualcore"
 )))]
-compile_error!("Enable exactly one model feature: lenet5qtf | lenet5qtfdualcore | lenet5qtorch | mobilenetv1");
+compile_error!(
+    "Enable exactly one model feature: lenet5qtf | lenet5qtfdualcore | lenet5qtorch | mobilenetv1"
+);
 
 #[cfg(feature = "lenet5qtf")]
 #[model("models/lenet5_quantized.tflite")]
 struct MyModel;
 
 #[cfg(feature = "lenet5qtfdualcore")]
-#[model("models/lenet5_quantized.tflite", crate::multicore_backend::ArielBackend)]
+#[model(
+    "models/lenet5_quantized.tflite",
+    crate::multicore_backend::ArielBackend
+)]
 struct MyModel;
 
 #[cfg(feature = "lenet5qtorch")]
@@ -40,14 +49,22 @@ struct MyModel;
 struct MyModel;
 
 #[cfg(feature = "mobilenetv1dualcore")]
-#[model("models_provided/mobilenetv1.tflite", crate::multicore_backend::ArielBackend)]
+#[model(
+    "models_provided/mobilenetv1.tflite",
+    crate::multicore_backend::ArielBackend
+)]
 struct MyModel;
 
-#[ariel_os::thread(autostart, priority = 2,stacksize = 320000)]
+#[ariel_os::thread(autostart, priority = 2, stacksize = 320000)]
 fn main() {
     let my_id = ariel_os::thread::current_tid().unwrap();
     let core = ariel_os::thread::core_id();
-    info!("microflow on {} board and thread [{:?}] core [{:?}]", ariel_os::buildinfo::BOARD, my_id, core);
+    info!(
+        "microflow on {} board and thread [{:?}] core [{:?}]",
+        ariel_os::buildinfo::BOARD,
+        my_id,
+        core
+    );
     #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore"))]
     info!("Model: lenet5_quantized (models/lenet5_quantized.tflite)");
     #[cfg(feature = "lenet5qtorch")]
@@ -60,7 +77,11 @@ fn main() {
 
     const RUNS: u64 = 4;
     let mut total_us: u64 = 0;
-    #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
+    #[cfg(any(
+        feature = "lenet5qtf",
+        feature = "lenet5qtfdualcore",
+        feature = "lenet5qtorch"
+    ))]
     let samples = [lenet_samples::digit_0(), lenet_samples::digit_1()];
     #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
     let samples = [mobilenet_samples::PERSON, mobilenet_samples::NO_PERSON];
@@ -81,14 +102,15 @@ fn main() {
             let person_detected = person_score > no_person_score;
             info!(
                 "sample_{} => person_detected={} (scores: no_person={}, person={})",
-                sample_idx,
-                person_detected,
-                no_person_score,
-                person_score
+                sample_idx, person_detected, no_person_score, person_score
             );
         }
 
-        #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
+        #[cfg(any(
+            feature = "lenet5qtf",
+            feature = "lenet5qtfdualcore",
+            feature = "lenet5qtorch"
+        ))]
         {
             let mut predicted_class: usize = 0;
             let mut best_val = prediction[(0, 0)];
@@ -99,7 +121,10 @@ fn main() {
                     predicted_class = c;
                 }
             }
-            info!("sample_{} => predicted_class={}", sample_idx, predicted_class);
+            info!(
+                "sample_{} => predicted_class={}",
+                sample_idx, predicted_class
+            );
         }
     }
 
